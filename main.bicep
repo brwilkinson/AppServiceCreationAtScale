@@ -4,7 +4,7 @@ targetScope = 'subscription'
 param resourceGroupName string = 'CS101-FA21'
 param classCode string = 'CS101-FA21'
 @minValue(1)
-param studentCount int = 18
+param studentCount int = 6
 
 // OPTIONAL PARAMETERS
 param location string = 'eastus'
@@ -90,4 +90,5 @@ output numberOfAppsMatchesStudentCount bool = (studentCount == numberOfAppsCalcu
 // output aspNames array = [for i in range(0, plansRequired): appServiceAndPlanModule[i].outputs.appServicePlanName]
 //output hostNames array = map(reduce(appServiceAndPlan, [], ), arg => arg.outputs.hostNames)
 
-output appServices array = appServices
+var appServicesSorted = sort(appServices, (a, b) => a.planIndex < b.planIndex)
+output appServices array = sort(appServicesSorted, (d,f) => d.appIndex < f.appIndex)
