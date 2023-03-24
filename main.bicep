@@ -1,10 +1,10 @@
 targetScope = 'subscription'
 
 // REQUIRED PARAMETERS
-param resourceGroupName string
-param classCode string
+param resourceGroupName string = 'CS101-FA21'
+param classCode string = 'CS101-FA21'
 @minValue(1)
-param studentCount int
+param studentCount int = 18
 
 // OPTIONAL PARAMETERS
 param location string = 'eastus'
@@ -16,7 +16,7 @@ param OS string = 'linux'
 param linuxFxVersion string = 'NODE|14-lts'
 @minValue(1)
 @maxValue(100)
-param maxAppsPerPlan int = 30
+param maxAppsPerPlan int = 3
 param dateCreatedTagValue string = utcNow('yyyy-MM-dd')
 param tags object = {}
 
@@ -42,17 +42,35 @@ resource resourceGroup 'Microsoft.Resources/resourceGroups@2021-04-01' = {
   location: location
 }
 
+var appServices = [for i in range(1, studentCount):{
+  planIndex: i % (studentCount/maxAppsPerPlan) + 1
+  appIndex: i % studentCount/plansRequired + 1
+}]
+
 module appServiceAndPlanModule 'AppServicePlan.bicep' = [for i in range(1, plansRequired): {
-  name: 'appServiceAndPlan-${i}-${classCode}'
+  name: 'appServiceAndPlan-${classCode}-${i}'
   scope: resourceGroup
   params: {
     location: location
-    appCount: actualAppsPerPlan[i - 1]
     planIndex: i
     classCode: classCode
     tags: actualTags
-    linuxFxVersion: linuxFxVersion
   }
+}]
+
+module appServiceModule 'AppService.bicep' = [for (app, i) in appServices: {
+  name: 'appService-${classCode}-${i}'
+  scope: resourceGroup
+  params: {
+    appName: 'app-${classCode}-${app.planIndex}-${padLeft(app.appIndex, 2, '0')}' // fixed width padding 2 or 3.
+    aspName: 'asp-${classCode}-${app.planIndex}'
+    location: location
+    linuxFxVersion: linuxFxVersion
+    tags: tags
+  }
+  dependsOn: [
+    appServiceAndPlanModule[app.planIndex-1]
+  ]
 }]
 
 // For verification, ensure that the number of apps matches the number of students
@@ -68,6 +86,8 @@ output numberOfAppsMatchesStudentCount bool = (studentCount == numberOfAppsCalcu
 
 //output flatHostNames array = [for i in range(0, plansRequired): reduce(appServiceAndPlanModule[i].outputs.hostNames, null, (previous, current) => '${previous},${current}')]
 //output hostNames array = [for i in range(0, plansRequired): appServiceAndPlanModule[i].outputs.hostNames]
-output appNames array = [for i in range(0, plansRequired): appServiceAndPlanModule[i].outputs.appNames]
-output aspNames array = [for i in range(0, plansRequired): appServiceAndPlanModule[i].outputs.appServicePlanName]
+// output appNames array = [for i in range(0, plansRequired): appServiceAndPlanModule[i].outputs.appNames]
+// output aspNames array = [for i in range(0, plansRequired): appServiceAndPlanModule[i].outputs.appServicePlanName]
 //output hostNames array = map(reduce(appServiceAndPlan, [], ), arg => arg.outputs.hostNames)
+
+output appServices array = appServices

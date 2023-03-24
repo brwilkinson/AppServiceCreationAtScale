@@ -1,5 +1,5 @@
 param appName string
-param appServicePlanId string
+param aspName string
 param location string
 
 param linuxFxVersion string = 'NODE|18-lts'
@@ -10,6 +10,10 @@ param tags object = {}
   'Windows'
 ])
 param OS string = 'Linux'
+
+resource appServicePlan 'Microsoft.Web/serverfarms@2022-03-01' existing = {
+  name: aspName
+}
 
 resource appService 'Microsoft.Web/sites@2022-03-01' = {
   name: appName
@@ -22,7 +26,7 @@ resource appService 'Microsoft.Web/sites@2022-03-01' = {
       alwaysOn: true
       ftpsState: 'FtpsOnly'
     }
-    serverFarmId: appServicePlanId
+    serverFarmId: appServicePlan.id
     clientAffinityEnabled: false
   }
 }
