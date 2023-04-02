@@ -45,3 +45,4 @@ resource linuxConfig 'Microsoft.Web/sites/config@2022-03-01' = if (OS == 'Linux'
 // No additional config required for .NET
 
 output appName string = appService.name
+output appURL string = appService.properties.defaultHostName
