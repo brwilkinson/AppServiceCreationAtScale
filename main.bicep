@@ -1,8 +1,8 @@
 targetScope = 'subscription'
 
 // REQUIRED PARAMETERS
-param resourceGroupName string = 'CS101-FA22'
-param classCode string = 'CS101-FA22'
+param resourceGroupName string = 'CS101-FA21'
+param classCode string = 'CS101-FA21'
 @minValue(1)
 param studentCount int = 6
 
